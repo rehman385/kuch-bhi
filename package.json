@@ -1,0 +1,16 @@
+{
+  "name": "our-space",
+  "version": "1.0.0",
+  "description": "Private memory-sharing app for two",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client"
+  },
+  "private": true,
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
