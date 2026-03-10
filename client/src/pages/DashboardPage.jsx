@@ -1,317 +1,235 @@
 import { useState, useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import {
-  Box, Button, Flex, Grid, Heading, Input, Text, Badge, Icon
+  Box, Flex, Text, Heading, SimpleGrid, Stat, Badge, IconButton, Stack
 } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { format, differenceInDays } from 'date-fns';
-import FloatingHearts from '../components/FloatingHearts';
+import { differenceInDays } from 'date-fns';
 import DreamyBackground from '../components/DreamyBackground';
+
+// Icons need to be text or images if I don't have an icon library installed,
+// using emoji for now as per previous design pattern
+// But let's check package.json for icons? No icons listed in dependencies.
+// Sticking to Emojis/Text for robusteness.
 
 const MotionBox = motion(Box);
 const MotionFlex = motion(Flex);
-const MotionText = motion(Text);
 
-// Mood emojis
-const MOODS = ['😊', '🥰', '😴', '😤', '🤒', '😭', '🤪', '🥳'];
-
-const DashboardCard = ({ to, emoji, title, description, color, delay }) => {
-  return (
-    <Box
-      as={RouterLink}
-      to={to}
-      position="relative"
-      display="block"
-      height="100%"
-      textDecoration="none"
-      _hover={{ textDecoration: 'none' }}
-    >
-      <MotionBox
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay, ease: [0.43, 0.13, 0.23, 0.96] }}
-        whileHover={{ y: -10, scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        h="100%"
-        bg="rgba(255, 255, 255, 0.65)"
-        backdropFilter="blur(20px)"
-        border="1px solid rgba(255, 255, 255, 0.8)"
-        rounded="3xl"
-        p={8}
-        shadow="xl"
-        overflow="hidden"
-        _hover={{ shadow: '2xl', borderColor: 'white' }}
-        display="flex"
-        flexDirection="column"
-      >
-        {/* Background Gradient Blob */}
-        <Box
-          position="absolute"
-          top="-60px"
-          right="-60px"
-          w="180px"
-          h="180px"
-          bg={`radial-gradient(circle, ${color} 0%, transparent 70%)`}
-          opacity={0.4}
-          filter="blur(40px)"
-        />
-        
-        <Text fontSize="5xl" mb={4}>{emoji}</Text>
-        <Heading size="lg" fontFamily="'Playfair Display', serif" color="gray.800" mb={3}>
-          {title}
-        </Heading>
-        <Text fontSize="md" color="gray.600" lineHeight="tall" fontFamily="'Outfit', sans-serif" mb={6}>
-          {description}
-        </Text>
-        
-        <Flex mt="auto" align="center" color="gray.400" fontSize="sm" fontWeight="bold">
-          OPEN <Box as="span" ml={2}>→</Box>
-        </Flex>
-      </MotionBox>
-    </Box>
-  );
-};
+const MENU_ITEMS = [
+  { title: 'Our Chat', emoji: '💬', path: '/chat', desc: 'Private conversations', color: 'pink' },
+  { title: 'Calendar', emoji: '📅', path: '/calendar', desc: 'Special dates', color: 'purple' },
+  { title: 'Gallery', emoji: '📸', path: '/gallery', desc: 'Our memories', color: 'teal' },
+  { title: 'Dreams', emoji: '✨', path: '/wishlist', desc: 'Future goals', color: 'yellow' },
+];
 
 const DashboardPage = () => {
-  const { user, logout, updateMood } = useAuth();
-  const [currentMood, setCurrentMood] = useState(user?.mood || '😊');
-  const [moodNote, setMoodNote] = useState(user?.moodNote || '');
-  const [isEditingNote, setIsEditingNote] = useState(false);
-  const [daysTogether, setDaysTogether] = useState(0);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [timeTogether, setTimeTogether] = useState(0);
+  const [greeting, setGreeting] = useState('');
 
-  // Calculate days together
+  // Configurable Start Date
+  const START_DATE = new Date('2026-03-09');
+
   useEffect(() => {
-    // START DATE: March 9, 2026 (as per user request)
-    const start = new Date('2026-03-09');
-    const now = new Date();
-    const diff = differenceInDays(now, start);
-    setDaysTogether(diff > 0 ? diff : 0); 
+    const days = differenceInDays(new Date(), START_DATE);
+    setTimeTogether(Math.max(0, days));
+
+    const hours = new Date().getHours();
+    if (hours < 12) setGreeting('Good Morning');
+    else if (hours < 18) setGreeting('Good Afternoon');
+    else setGreeting('Good Evening');
   }, []);
 
-  const handleMoodSelect = (mood) => {
-    setCurrentMood(mood);
-    updateMood(mood, moodNote);
-  };
-
-  const saveNote = () => {
-    updateMood(currentMood, moodNote);
-    setIsEditingNote(false);
+  const handleLogout = () => {
+    if (window.confirm('Leaving so soon? 🥺')) {
+      logout();
+      navigate('/login');
+    }
   };
 
   return (
     <DreamyBackground>
-      {/* Floating Particles */}
-      <FloatingHearts />
-      
-      {/* Navbar */}
-      <Flex
-        as="nav"
-        position="sticky"
-        top={0}
-        zIndex={50}
-        px={{ base: 4, md: 8 }}
-        py={4}
-        justify="space-between"
-        align="center"
-        bg="rgba(255,255,255,0.0)"
-      >
-        <Heading 
-          size="md" 
-          fontFamily="'Playfair Display', serif"
-          bgGradient="linear(to-r, pink.500, purple.600)" 
-          bgClip="text"
-        >
-          Our Space
-        </Heading>
-        <Button 
-          onClick={logout} 
-          variant="ghost" 
-          size="sm" 
-          color="gray.600"
-          _hover={{ bg: 'whiteAlpha.500' }}
-        >
-          Logout
-        </Button>
-      </Flex>
-
-      <Box maxW="1200px" mx="auto" px={{ base: 6, md: 10 }} pb={20} pt={4} position="relative" zIndex={1}>
-        
-        {/* Hero Section */}
-        <Flex direction={{ base: 'column', md: 'row' }} align="center" justify="space-between" mb={12} gap={8}>
-          <Box flex={1} textAlign={{ base: 'center', md: 'left' }}>
-            <MotionText
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              color="gray.500"
-              fontSize="lg"
-              fontWeight="medium"
-              mb={2}
-            >
-              Have a beautiful day,
-            </MotionText>
-            <MotionBox
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <Heading 
-                size="4xl" 
-                fontFamily="'Playfair Display', serif" 
-                color="gray.800"
-                lineHeight="1.2"
-                mb={4}
-              >
-                {user?.name || 'My Love'}
-              </Heading>
-            </MotionBox>
-            
-            {/* Days Counter Badge */}
-            <MotionBox
-               initial={{ opacity: 0, scale: 0.9 }}
-               animate={{ opacity: 1, scale: 1 }}
-               transition={{ duration: 0.5, delay: 0.5 }}
-               display="inline-flex"
-               alignItems="center"
-               bg="white"
-               px={5}
-               py={2}
-               rounded="full"
-               shadow="md"
-               color="pink.500"
-               fontWeight="bold"
-               fontSize="sm"
-            >
-               💑 Together for {daysTogether} days
-            </MotionBox>
-          </Box>
-
-          {/* Mood Tracker Card */}
-          <MotionBox
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            bg="rgba(255, 255, 255, 0.7)"
-            backdropFilter="blur(20px)"
-            p={6}
-            rounded="3xl"
-            shadow="lg"
-            maxW="400px"
-            w="full"
-            border="1px solid white"
-          >
-            <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="widest" mb={4} textAlign="center">
-              Daily Mood Check-in
+      <Box minH="100vh" p={{ base: 4, md: 8 }} pb={20}>
+        {/* ── Header ──────────────────────────────────────────── */}
+        <Flex justify="space-between" align="center" mb={10} bg="rgba(255,255,255,0.7)" backdropFilter="blur(10px)" p={4} rounded="2xl" shadow="sm">
+          <Box>
+            <Text fontSize="sm" color="gray.500" fontWeight="bold" textTransform="uppercase" letterSpacing="wide">
+              {greeting},
             </Text>
-            
-            <Grid templateColumns="repeat(4, 1fr)" gap={2} mb={4}>
-              {MOODS.map((m) => (
-                 <MotionBox
-                  key={m}
-                  as="button"
-                  fontSize="2xl"
-                  onClick={() => handleMoodSelect(m)}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  p={2}
-                  rounded="xl"
-                  bg={currentMood === m ? 'pink.100' : 'transparent'}
-                  transition="all 0.2s"
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  {m}
-                 </MotionBox>
-              ))}
-            </Grid>
-
-            <Box borderTop="1px solid" borderColor="blackAlpha.100" pt={3}>
-               {isEditingNote ? (
-                 <Flex gap={2}>
-                   <Input 
-                     value={moodNote}
-                     onChange={(e) => setMoodNote(e.target.value)}
-                     placeholder="How do you feel?"
-                     size="sm"
-                     variant="filled"
-                     bg="whiteAlpha.500"
-                     autoFocus
-                   />
-                   <Button size="xs" colorPalette="pink" onClick={saveNote}>Save</Button>
-                 </Flex>
-               ) : (
-                <Text 
-                  fontSize="sm" 
-                  color={moodNote ? "gray.700" : "gray.400"} 
-                  fontStyle="italic"
-                  cursor="pointer"
-                  onClick={() => setIsEditingNote(true)}
-                  textAlign="center"
-                  _hover={{ color: "pink.500" }}
-                >
-                  {moodNote ? `"${moodNote}"` : "Tap to add a note..."}
-                </Text>
-               )}
-            </Box>
-          </MotionBox>
+            <Heading size="lg" fontFamily="'Playfair Display', serif" bgGradient="linear(to-r, pink.500, purple.500)" bgClip="text">
+              {user?.name || 'Love'}
+            </Heading>
+          </Box>
+          <IconButton
+            onClick={handleLogout}
+            aria-label="Logout"
+            variant="ghost"
+            rounded="full"
+            color="red.400"
+            _hover={{ bg: 'red.50', color: 'red.600' }}
+            fontSize="xl"
+          >
+            🚪
+          </IconButton>
         </Flex>
 
-        {/* Features Grid */}
-        <Grid 
-          templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }} 
-          gap={6}
-          mb={16}
-        >
-          <DashboardCard 
-            to="/chat"
-            emoji="💌"
-            title="Chat"
-            description="Our private messages"
-            color="rgba(255, 107, 157, 1)"
-            delay={0.4}
-          />
-          <DashboardCard 
-            to="/calendar"
-            emoji="📅"
-            title="Calendar"
-            description="Special dates & plans"
-            color="rgba(167, 139, 250, 1)"
-            delay={0.5}
-          />
-          <DashboardCard 
-            to="/gallery"
-            emoji="📸"
-            title="Gallery"
-            description="Our favorite memories"
-            color="rgba(132, 250, 176, 1)"
-            delay={0.6}
-          />
-          <DashboardCard 
-            to="/wishlist"
-            emoji="✨"
-            title="Wishlist"
-            description="Dreams we share"
-            color="rgba(251, 191, 36, 1)"
-            delay={0.7}
-          />
-        </Grid>
-
-        {/* Quote */}
+        {/* ── Hero Card ───────────────────────────────────────── */}
         <MotionBox
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          bgGradient="linear(to-br, #fbc2eb 0%, #a6c1ee 100%)"
+          rounded="3xl"
+          p={8}
+          mb={10}
+          shadow="xl"
           textAlign="center"
-          maxW="600px"
-          mx="auto"
-          px={4}
+          position="relative"
+          overflow="hidden"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM36 0V4h-2V0h-4v2h4v4h2V2h4V0h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            opacity: 0.4
+          }}
         >
-           <Text fontFamily="'Playfair Display', serif" fontSize="xl" fontStyle="italic" color="gray.500">
-             "I look at you and see the rest of my life in front of my eyes."
-           </Text>
+          {/* Animated decorative circles */}
+          <motion.div
+            style={{ position: 'absolute', top: '-30px', left: '-30px', width: '180px', height: '180px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', filter: 'blur(30px)' }}
+            animate={{ scale: [1, 1.2, 1], x: [0, 20, 0] }}
+            transition={{ duration: 8, repeat: Infinity }}
+          />
+          <motion.div
+            style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', filter: 'blur(40px)' }}
+            animate={{ scale: [1, 1.3, 1], y: [0, -20, 0] }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
+          <motion.div
+            style={{ position: 'absolute', top: '40%', left: '50%', width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', filter: 'blur(20px)' }}
+            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 6, repeat: Infinity }}
+          />
+
+          <Text fontSize="lg" color="white" fontWeight="bold" mb={2} letterSpacing="wider" textTransform="uppercase" textShadow="0 2px 4px rgba(0,0,0,0.1)">
+            Together For
+          </Text>
+          <Heading
+            fontSize={{ base: '6xl', md: '8xl' }}
+            color="white"
+            fontWeight="black"
+            textShadow="0 8px 20px rgba(0,0,0,0.15)"
+            lineHeight="1"
+            mb={2}
+          >
+            {timeTogether}
+          </Heading>
+          <Text fontSize="2xl" color="white" mb={6} fontFamily="'Playfair Display', serif" fontWeight="medium">Days of Love</Text>
+
+          <Badge
+            bg="rgba(255,255,255,0.25)"
+            backdropFilter="blur(5px)"
+            color="white"
+            px={6} py={2}
+            rounded="full"
+            fontSize="sm"
+            border="1px solid rgba(255,255,255,0.4)"
+            boxShadow="0 4px 10px rgba(0,0,0,0.05)"
+          >
+            Since March 9, 2026 ❤️
+          </Badge>
         </MotionBox>
+
+        {/* ── Grid Menu ───────────────────────────────────────── */}
+        <SimpleGrid columns={{ base: 2, md: 4 }} spacing={5} mb={10}>
+          {MENU_ITEMS.map((item, index) => (
+            <MotionBox
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ y: -8, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(item.path)}
+              bg="rgba(255, 255, 255, 0.6)"
+              backdropFilter="blur(20px)"
+              p={6}
+              rounded="3xl"
+              shadow="lg"
+              cursor="pointer"
+              textAlign="center"
+              border="1px solid"
+              borderColor="white"
+              height="180px"
+              display="flex"
+              flexDirection="column"
+              justifyContent="center"
+              alignItems="center"
+              position="relative"
+              overflow="hidden"
+              _before={{
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                background: `linear-gradient(135deg, ${item.color === 'pink' ? '#fbcfe8' : item.color === 'purple' ? '#e9d5ff' : item.color === 'teal' ? '#99f6e4' : '#fef08a'} 0%, transparent 100%)`,
+                opacity: 0.1,
+                zIndex: 0
+              }}
+            >
+              <Box position="relative" zIndex={1}>
+                <Text
+                  fontSize="5xl"
+                  mb={3}
+                  style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
+                  as={motion.p}
+                  whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  {item.emoji}
+                </Text>
+                <Text fontWeight="bold" color="gray.700" fontSize="lg" mb={1}>{item.title}</Text>
+                <Text fontSize="xs" color="gray.500" fontWeight="medium">{item.desc}</Text>
+              </Box>
+            </MotionBox>
+          ))}
+        </SimpleGrid>
+
+        {/* ── Daily Mood (Mockup) ─────────────────────────────── */}
+        <Box
+          bg="rgba(255, 255, 255, 0.6)"
+          backdropFilter="blur(20px)"
+          rounded="3xl"
+          p={8}
+          shadow="lg"
+          border="1px solid"
+          borderColor="white"
+          textAlign="center"
+        >
+          <Heading size="md" mb={4} fontFamily="'Playfair Display', serif" color="gray.700">
+            How are you feeling today?
+          </Heading>
+          <Flex justify="space-around">
+            {['🥰', '😊', '😐', '😢', '😤'].map((emoji) => (
+              <MotionBox
+                key={emoji}
+                whileHover={{ scale: 1.3 }}
+                whileTap={{ scale: 0.9 }}
+                fontSize="3xl"
+                cursor="pointer"
+                filter="grayscale(100%)"
+                transition="all 0.2s"
+                _hover={{ filter: 'grayscale(0%)' }}
+              >
+                {emoji}
+              </MotionBox>
+            ))}
+          </Flex>
+        </Box>
 
       </Box>
     </DreamyBackground>

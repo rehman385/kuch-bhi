@@ -12,6 +12,7 @@ import DashboardPage from './pages/DashboardPage';
 import ChatPage from './pages/ChatPage';
 import CalendarPage from './pages/CalendarPage';
 import GalleryPage from './pages/GalleryPage';
+import WishlistPage from './pages/WishlistPage';
 
 // Global styles
 import './App.css';
@@ -80,9 +81,7 @@ function App() {
             path="/wishlist"
             element={
               <ProtectedRoute>
-                <div style={{ padding: '2rem' }}>
-                  <h1>✨ Wishlist Page — Coming Soon</h1>
-                </div>
+                <WishlistPage />
               </ProtectedRoute>
             }
           />

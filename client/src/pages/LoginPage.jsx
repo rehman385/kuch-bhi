@@ -1,20 +1,33 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import {
-  Box, Button, Field, Heading, Input, Link, Stack, Text, Alert
-} from '@chakra-ui/react';
+import { Box, Button, Heading, Input, Link, Stack, Text, Flex } from '@chakra-ui/react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import DreamyBackground from '../components/DreamyBackground';
+
+const MotionBox = motion(Box);
+
+const hearts = [
+  { left: '8%',  bottom: '8%',  size: '18px', duration: 4,   delay: 0,   char: '❤️' },
+  { left: '22%', bottom: '5%',  size: '13px', duration: 5,   delay: 1,   char: '💕' },
+  { left: '48%', bottom: '6%',  size: '20px', duration: 4.5, delay: 0.5, char: '❤️' },
+  { left: '68%', bottom: '10%', size: '12px', duration: 6,   delay: 1.5, char: '💖' },
+  { left: '84%', bottom: '5%',  size: '16px', duration: 3.5, delay: 0.8, char: '💕' },
+  { left: '38%', bottom: '2%',  size: '10px', duration: 5.5, delay: 2,   char: '✨' },
+  { left: '15%', bottom: '15%', size: '11px', duration: 4.8, delay: 2.5, char: '🌸' },
+  { left: '60%', bottom: '3%',  size: '14px', duration: 5.2, delay: 1.2, char: '💗' },
+  { left: '75%', bottom: '18%', size: '9px',  duration: 6.5, delay: 3,   char: '⭐' },
+  { left: '92%', bottom: '12%', size: '12px', duration: 4.2, delay: 0.3, char: '💫' },
+];
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [focused, setFocused]   = useState('');
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login }  = useAuth();
+  const navigate   = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,78 +37,221 @@ const LoginPage = () => {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.message || 'Incorrect email or password.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <DreamyBackground>
-      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" px={4}>
-        <Box bg="whiteAlpha.900" rounded="2xl" shadow="2xl" p={10} w="full" maxW="420px" backdropFilter="blur(10px)">
-          <Stack gap={6}>
-            <Stack gap={1} textAlign="center">
-              <Heading size="2xl">💑 Welcome Back</Heading>
-              <Text color="gray.500">Your private memory space awaits</Text>
-            </Stack>
+    <Box
+      minH="100vh"
+      w="100%"
+      position="relative"
+      overflow="hidden"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      bg="#120822"
+    >
+      {/* ── Background blobs ──────────────────────────────── */}
+      <motion.div style={{ position:'absolute', inset:0, zIndex:0, background:'linear-gradient(135deg,#1a0533 0%,#2d1b69 40%,#0d3d56 100%)' }} />
+      <motion.div style={{ position:'absolute', top:'-15%', left:'-15%', width:'480px', height:'480px', borderRadius:'50%', background:'radial-gradient(circle, rgba(236,72,153,0.35) 0%, transparent 70%)', filter:'blur(60px)', zIndex:0 }} animate={{ x:[0,40,0], y:[0,30,0] }} transition={{ duration:12, repeat:Infinity, ease:'easeInOut' }} />
+      <motion.div style={{ position:'absolute', bottom:'-10%', right:'-10%', width:'560px', height:'560px', borderRadius:'50%', background:'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)', filter:'blur(80px)', zIndex:0 }} animate={{ x:[0,-30,0], y:[0,-40,0] }} transition={{ duration:15, repeat:Infinity, ease:'easeInOut' }} />
+      <motion.div style={{ position:'absolute', top:'40%', left:'40%', width:'300px', height:'300px', borderRadius:'50%', background:'radial-gradient(circle, rgba(56,189,248,0.15) 0%, transparent 70%)', filter:'blur(50px)', zIndex:0 }} animate={{ x:[0,25,-25,0], y:[0,-20,20,0] }} transition={{ duration:18, repeat:Infinity, ease:'easeInOut' }} />
 
-            {error && (
-              <Alert.Root status="error" rounded="lg">
-                <Alert.Indicator />
-                <Alert.Description>{error}</Alert.Description>
-              </Alert.Root>
-            )}
+      {/* ── Floating hearts ───────────────────────────────── */}
+      <Box position="absolute" inset={0} zIndex={1} pointerEvents="none" overflow="hidden">
+        {hearts.map((h, i) => (
+          <motion.div
+            key={i}
+            style={{ position:'absolute', fontSize:h.size, opacity:0, left:h.left, bottom:h.bottom }}
+            animate={{ y:[0,-130], opacity:[0,0.9,0], scale:[0.6,1.2,0.7] }}
+            transition={{ duration:h.duration, repeat:Infinity, delay:h.delay, ease:'easeOut' }}
+          >
+            {h.char}
+          </motion.div>
+        ))}
+      </Box>
 
-            <form onSubmit={handleSubmit}>
-              <Stack gap={4}>
-                <Field.Root required>
-                  <Field.Label>Email</Field.Label>
+      {/* ── Card ──────────────────────────────────────────── */}
+      <MotionBox
+        initial={{ opacity:0, y:50, scale:0.93 }}
+        animate={{ opacity:1, y:0, scale:1 }}
+        transition={{ duration:0.7, ease:[0.25,0.46,0.45,0.94] }}
+        position="relative"
+        zIndex={2}
+        w="full"
+        maxW={{ base:'calc(100% - 32px)', sm:'400px' }}
+        mx="auto"
+        bg="rgba(255,255,255,0.07)"
+        backdropFilter="blur(30px)"
+        border="1px solid rgba(255,255,255,0.13)"
+        rounded="3xl"
+        shadow="0 30px 60px rgba(0,0,0,0.6)"
+        overflow="hidden"
+        _before={{
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 'inherit',
+          padding: '1px',
+          background: 'linear-gradient(135deg, rgba(244,114,182,0.4), rgba(168,85,247,0.2), rgba(56,189,248,0.2))',
+          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'xor',
+          maskComposite: 'exclude',
+          pointerEvents: 'none',
+          zIndex: 3,
+        }}
+      >
+        {/* Rainbow top bar */}
+        <Box h="3px" bgGradient="linear(to-r, #f472b6, #a855f7, #38bdf8)" />
+
+        <Box p={{ base:7, sm:10 }}>
+
+          {/* Logo */}
+          <Flex direction="column" align="center" mb={7}>
+            <motion.div
+              animate={{ scale:[1,1.12,1], rotate:[0,6,-6,0] }}
+              transition={{ duration:3, repeat:Infinity, ease:'easeInOut' }}
+              style={{ fontSize:'56px', lineHeight:1, marginBottom:'12px' }}
+            >
+              💑
+            </motion.div>
+            <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}>
+              <Heading
+                fontSize={{ base:'2xl', sm:'3xl' }}
+                fontFamily="'Playfair Display', serif"
+                color="white"
+                textAlign="center"
+                mb={1}
+              >
+                Our Space
+              </Heading>
+              <Text color="whiteAlpha.500" fontSize="sm" textAlign="center">Your private sanctuary 🌸</Text>
+            </motion.div>
+          </Flex>
+
+          {/* Error */}
+          {error && (
+            <motion.div initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }}>
+              <Box bg="rgba(239,68,68,0.15)" border="1px solid rgba(239,68,68,0.4)" rounded="xl" px={4} py={3} mb={5} display="flex" alignItems="center" gap={2}>
+                <Text fontSize="sm">⚠️</Text>
+                <Text fontSize="sm" color="red.300">{error}</Text>
+              </Box>
+            </motion.div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit}>
+            <Stack gap={4}>
+
+              {/* Email */}
+              <Box>
+                <Text fontSize="xs" fontWeight="700" color="whiteAlpha.600" mb={2} letterSpacing="widest" textTransform="uppercase">Email</Text>
+                <Box rounded="xl" transition="box-shadow 0.3s" boxShadow={focused === 'email' ? '0 0 0 2px #f472b6' : 'none'}>
                   <Input
                     type="email"
                     placeholder="your@email.com"
                     value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  _focus={{ borderColor: 'pink.400' }}
-                />
-                </Field.Root>
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocused('email')}
+                    onBlur={() => setFocused('')}
+                    size="lg"
+                    bg="rgba(255,255,255,0.07)"
+                    border="1px solid rgba(255,255,255,0.1)"
+                    color="white"
+                    rounded="xl"
+                    _placeholder={{ color:'whiteAlpha.300' }}
+                    _focus={{ outline:'none', borderColor:'transparent', bg:'rgba(255,255,255,0.11)', boxShadow:'none' }}
+                    _hover={{ bg:'rgba(255,255,255,0.1)' }}
+                  />
+                </Box>
+              </Box>
 
-                <Field.Root required>
-                  <Field.Label>Password</Field.Label>
+              {/* Password */}
+              <Box>
+                <Text fontSize="xs" fontWeight="700" color="whiteAlpha.600" mb={2} letterSpacing="widest" textTransform="uppercase">Password</Text>
+                <Box rounded="xl" transition="box-shadow 0.3s" boxShadow={focused === 'password' ? '0 0 0 2px #a855f7' : 'none'}>
                   <Input
                     type="password"
                     placeholder="••••••••"
                     value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  _focus={{ borderColor: 'pink.400' }}
-                />
-                </Field.Root>
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setFocused('password')}
+                    onBlur={() => setFocused('')}
+                    size="lg"
+                    bg="rgba(255,255,255,0.07)"
+                    border="1px solid rgba(255,255,255,0.1)"
+                    color="white"
+                    rounded="xl"
+                    _placeholder={{ color:'whiteAlpha.300' }}
+                    _focus={{ outline:'none', borderColor:'transparent', bg:'rgba(255,255,255,0.11)', boxShadow:'none' }}
+                    _hover={{ bg:'rgba(255,255,255,0.1)' }}
+                  />
+                </Box>
+              </Box>
 
+              {/* Submit */}
+              <motion.div whileTap={{ scale:0.97 }} style={{ marginTop:'8px' }}>
                 <Button
                   type="submit"
-                  colorPalette="pink"
+                  w="full"
+                  h="54px"
+                  rounded="xl"
+                  bg="linear-gradient(135deg, #f472b6 0%, #a855f7 100%)"
+                  color="white"
+                  fontWeight="bold"
+                  fontSize="md"
                   loading={loading}
                   loadingText="Signing in..."
-                  w="full"
-                  size="lg"
-                  mt={2}
+                  border="none"
+                  _hover={{ bg:'linear-gradient(135deg,#ec4899 0%,#9333ea 100%)', transform:'translateY(-2px)', boxShadow:'0 12px 30px rgba(168,85,247,0.45)' }}
+                  _active={{ transform:'translateY(0)' }}
+                  transition="all 0.2s"
+                  position="relative"
+                  overflow="hidden"
+                  _after={{
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                    animation: 'shimmer 3s infinite',
+                  }}
                 >
-                  Sign In
+                  Enter Our Space 💌
                 </Button>
-              </Stack>
-            </form>
+                <style>{`
+                  @keyframes shimmer {
+                    0% { left: -100%; }
+                    20% { left: 100%; }
+                    100% { left: 100%; }
+                  }
+                `}</style>
+              </motion.div>
+            </Stack>
+          </form>
 
-            <Text textAlign="center" fontSize="sm" color="gray.500">
-              New here?{' '}
-              <Link asChild color="pink.500" fontWeight="semibold">
-                <RouterLink to="/register">Create Account</RouterLink>
-              </Link>
-            </Text>
-          </Stack>
+          {/* Register */}
+          <Flex justify="center" mt={6} gap={2} align="center">
+            <Text fontSize="sm" color="whiteAlpha.400">New here?</Text>
+            <Link asChild fontSize="sm" fontWeight="bold" color="pink.300" _hover={{ color:'pink.200', textDecoration:'none' }}>
+              <RouterLink to="/register">Create an account</RouterLink>
+            </Link>
+          </Flex>
+
         </Box>
-      </Box>
-    </DreamyBackground>
+      </MotionBox>
+    </Box>
   );
 };
 
 export default LoginPage;
+
+
+
+
+

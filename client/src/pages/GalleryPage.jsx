@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Box, Button, Flex, Grid, Heading, Input, Text, Stack
+  Box, Button, Flex, Grid, Heading, Input, Text, Stack, IconButton
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import api from '../utils/axiosConfig';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
+import DreamyBackground from '../components/DreamyBackground';
+
+const MotionBox = motion(Box);
 
 // Use environment variable for server URL
 const SERVER_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:5000`;
 
 const GalleryPage = () => {
   const navigate = useNavigate();
-  const { } = useAuth();
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -63,23 +67,37 @@ const GalleryPage = () => {
   const getMediaUrl = (filename) => `${SERVER_URL}/uploads/${filename}`;
 
   return (
-    <Box minH="100vh" bg="pink.50">
+    <DreamyBackground>
       {/* Header */}
-      <Flex bg="white" px={6} py={4} shadow="sm" align="center" gap={3}>
-        <Button size="sm" variant="ghost" onClick={() => navigate('/')}>← Back</Button>
-        <Text fontSize="2xl">🖼️</Text>
-        <Heading size="md" color="pink.500">Our Gallery</Heading>
+      <Flex
+        px={6} py={4}
+        align="center"
+        justify="space-between"
+        bg="rgba(255,255,255,0.7)"
+        backdropFilter="blur(10px)"
+        position="sticky"
+        top={0}
+        zIndex={10}
+      >
+        <Flex align="center" gap={3}>
+          <Button size="sm" variant="ghost" onClick={() => navigate('/')} rounded="full">← Back</Button>
+          <Text fontSize="2xl">🖼️</Text>
+          <Heading size="md" color="pink.600" fontFamily="'Playfair Display', serif">Our Gallery</Heading>
+        </Flex>
+        <Text fontSize="sm" color="gray.500" fontWeight="medium">
+          {items.length} Memories
+        </Text>
       </Flex>
 
-      <Box maxW="1100px" mx="auto" px={4} py={6}>
+      <Box maxW="1200px" mx="auto" px={4} py={6}>
 
         {/* Upload Card */}
         <Box
           bg="white"
           rounded="3xl"
           p={8}
-          shadow="lg"
-          mb={8}
+          shadow="xl"
+          mb={10}
           border="1px solid"
           borderColor="pink.100"
           position="relative"
@@ -91,31 +109,19 @@ const GalleryPage = () => {
           <Heading size="lg" color="gray.700" fontFamily="'Playfair Display', serif" mb={6}>📸 Add a New Memory</Heading>
 
           <Stack gap={6}>
-            <Box
-              border="2px dashed"
-              borderColor="pink.200"
-              rounded="2xl"
-              p={10}
-              textAlign="center"
-              cursor="pointer"
-              bg="pink.50"
-              onClick={() => fileRef.current?.click()}
-              _hover={{ borderColor: 'pink.400', bg: 'pink.100', transform: 'scale(1.01)' }}
-              transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-            >
-              {preview ? (
-                <Box>
-                  {preview.file.type.startsWith('video') ? (
-                    <video src={preview.url} style={{ maxHeight: '300px', maxWidth: '100%', borderRadius: '16px', margin: '0 auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} controls />
-                  ) : (
-                    <img src={preview.url} alt="preview" style={{ maxHeight: '300px', maxWidth: '100%', borderRadius: '16px', margin: '0 auto', objectFit: 'contain', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                  )}
-                  <Flex justify="center" align="center" mt={3} gap={2}>
-                    <Text fontSize="sm" color="gray.600" fontWeight="medium">{preview.file.name}</Text>
-                    <Button size="xs" variant="ghost" colorPalette="red" onClick={(e) => { e.stopPropagation(); setPreview(null); }}>Change</Button>
-                  </Flex>
-                </Box>
-              ) : (
+            {!preview ? (
+              <Box
+                border="2px dashed"
+                borderColor="pink.200"
+                rounded="2xl"
+                p={10}
+                textAlign="center"
+                cursor="pointer"
+                bg="pink.50"
+                onClick={() => fileRef.current?.click()}
+                _hover={{ borderColor: 'pink.400', bg: 'pink.100', transform: 'scale(1.01)' }}
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+              >
                 <Stack align="center" spacing={3}>
                   <Box bg="white" p={4} rounded="full" shadow="sm">
                     <Text fontSize="4xl">📷</Text>
@@ -123,8 +129,27 @@ const GalleryPage = () => {
                   <Text color="gray.600" fontSize="lg" fontWeight="medium">Click to choose a photo or video</Text>
                   <Text color="gray.400" fontSize="sm">JPG, PNG, MP4 — Max 20MB</Text>
                 </Stack>
-              )}
-            </Box>
+              </Box>
+            ) : (
+              <Box
+                rounded="2xl"
+                overflow="hidden"
+                shadow="md"
+                bg="gray.50"
+                p={2}
+                position="relative"
+              >
+                <Box position="absolute" top={4} right={4} zIndex={5}>
+                  <Button size="xs" colorPalette="red" onClick={(e) => { e.stopPropagation(); setPreview(null); }}>Change</Button>
+                </Box>
+                {preview.file.type.startsWith('video') ? (
+                  <video src={preview.url} style={{ maxHeight: '400px', width: '100%', borderRadius: '12px', margin: '0 auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} controls />
+                ) : (
+                  <img src={preview.url} alt="preview" style={{ maxHeight: '400px', width: '100%', objectFit: 'contain', borderRadius: '12px', margin: '0 auto' }} />
+                )}
+                <Text textAlign="center" fontSize="sm" color="gray.500" mt={2}>{preview.file.name}</Text>
+              </Box>
+            )}
 
             <input
               ref={fileRef}
@@ -134,7 +159,7 @@ const GalleryPage = () => {
               onChange={handleFileChange}
             />
 
-            <Stack direction={{ base: 'column', sm: 'row' }} gap={3}>
+            <Flex gap={3} direction={{ base: 'column', md: 'row' }}>
               <Input
                 placeholder="Write a sweet caption... 💕"
                 value={caption}
@@ -145,7 +170,7 @@ const GalleryPage = () => {
                 border="1px solid"
                 borderColor="gray.200"
                 rounded="xl"
-                flex={2}
+                flex={1}
               />
               <Button
                 size="lg"
@@ -156,79 +181,89 @@ const GalleryPage = () => {
                 loading={uploading}
                 loadingText="Uploading..."
                 disabled={!preview}
-                flex={1}
+                width={{ base: 'full', md: '200px' }}
                 rounded="xl"
                 fontWeight="bold"
                 transition="all 0.2s"
               >
                 Upload Memory 💾
               </Button>
-            </Stack>
+            </Flex>
           </Stack>
         </Box>
 
-        {/* Gallery Grid */}
+        {/* Gallery Masonry-like Grid using CSS Columns */}
         {items.length === 0 ? (
-          <Box textAlign="center" py={16}>
-            <Text fontSize="5xl" mb={4}>🌸</Text>
-            <Heading size="md" color="gray.400">No memories yet</Heading>
-            <Text color="gray.400" mt={2}>Upload your first photo or video together!</Text>
+          <Box textAlign="center" py={16} bg="whiteAlpha.600" rounded="3xl">
+            <Text fontSize="6xl" mb={4}>🌸</Text>
+            <Heading size="md" color="gray.500" mb={2}>No memories yet</Heading>
+            <Text color="gray.400">Upload your first photo or video together!</Text>
           </Box>
         ) : (
-          <Grid templateColumns={{ base: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }} gap={3}>
+          <Box
+            sx={{
+              columnCount: [1, 2, 3],
+              columnGap: '20px',
+            }}
+          >
             {items.map((item, index) => (
-              <Box
+              <MotionBox
                 key={item._id}
-                data-aos="fade-up"
-                data-aos-delay={index * 50}
-                rounded="xl"
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                mb="20px"
+                bg="white"
+                rounded="2xl"
                 overflow="hidden"
                 shadow="md"
-                bg="white"
-                position="relative"
                 cursor="pointer"
-                _hover={{ shadow: 'xl', transform: 'scale(1.02)' }}
-                transition="all 0.2s"
+                _hover={{ shadow: '2xl', transform: 'scale(1.02)' }}
                 onClick={() => setLightbox(item)}
+                position="relative"
+                breakInside="avoid"
               >
                 {item.mimetype?.startsWith('video') ? (
                   <Box position="relative">
                     <video
                       src={getMediaUrl(item.filename)}
-                      style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                      style={{ width: '100%', height: 'auto', display: 'block' }}
                     />
                     <Box
                       position="absolute" top="50%" left="50%"
                       transform="translate(-50%, -50%)"
-                      bg="blackAlpha.600" rounded="full" p={2}
+                      bg="blackAlpha.600" rounded="full" p={3}
                     >
-                      <Text fontSize="xl">▶️</Text>
+                      <Text fontSize="2xl" color="white">▶️</Text>
                     </Box>
                   </Box>
                 ) : (
                   <img
                     src={getMediaUrl(item.filename)}
                     alt={item.caption || 'memory'}
-                    style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                    loading="lazy"
                   />
                 )}
-                <Box p={2}>
+
+                <Box p={4} bg="white">
                   {item.caption && (
-                    <Text fontSize="xs" color="gray.600" noOfLines={1}>{item.caption}</Text>
+                    <Text fontSize="md" color="gray.800" fontWeight="medium" mb={2}>{item.caption}</Text>
                   )}
-                  <Flex justify="space-between" align="center" mt={1}>
+                  <Flex justify="space-between" align="center">
                     <Text fontSize="xs" color="gray.400">
                       {item.createdAt ? format(new Date(item.createdAt), 'MMM d, yyyy') : ''}
                     </Text>
-                    <Text fontSize="xs" color="pink.400">{item.uploaderName}</Text>
+                    <Text fontSize="xs" color="pink.400" fontWeight="bold">{item.uploaderName}</Text>
                   </Flex>
                 </Box>
 
                 {/* Delete button */}
                 <Button
                   position="absolute"
-                  top={2}
-                  right={2}
+                  top={3}
+                  right={3}
                   size="xs"
                   colorPalette="red"
                   rounded="full"
@@ -238,12 +273,13 @@ const GalleryPage = () => {
                   bg="red.500"
                   color="white"
                   _hover={{ opacity: 1 }}
+                  shadow="lg"
                 >
                   ✕
                 </Button>
-              </Box>
+              </MotionBox>
             ))}
-          </Grid>
+          </Box>
         )}
       </Box>
 
@@ -254,48 +290,48 @@ const GalleryPage = () => {
           display="flex" alignItems="center" justifyContent="center"
           onClick={() => setLightbox(null)}
           p={4}
+          backdropFilter="blur(5px)"
         >
-          <Box onClick={(e) => e.stopPropagation()} maxW="90vw" maxH="90vh" position="relative">
+          <MotionBox
+            onClick={(e) => e.stopPropagation()}
+            maxW="95vw" maxH="95vh"
+            position="relative"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
             {lightbox.mimetype?.startsWith('video') ? (
               <video
                 src={getMediaUrl(lightbox.filename)}
                 controls autoPlay
-                style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: '12px' }}
+                style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: '16px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
               />
             ) : (
               <img
                 src={getMediaUrl(lightbox.filename)}
                 alt={lightbox.caption}
-                style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: '12px', objectFit: 'contain' }}
+                style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: '16px', objectFit: 'contain', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
               />
             )}
             {lightbox.caption && (
-              <Box bg="blackAlpha.700" color="white" px={4} py={2} rounded="lg" mt={2} textAlign="center">
-                <Text fontSize="sm">{lightbox.caption}</Text>
+              <Box bg="blackAlpha.800" color="white" px={6} py={3} rounded="full" mt={4} textAlign="center" position="absolute" bottom="-60px" left="50%" transform="translateX(-50%)">
+                <Text fontSize="lg">{lightbox.caption}</Text>
               </Box>
             )}
-            <Button
-              position="absolute" top={-4} right={-4}
-              rounded="full" size="sm" bg="white" color="gray.700"
+            <IconButton
+              aria-label="Close"
+              position="absolute" top={-12} right={-12}
+              rounded="full" size="lg" bg="whiteAlpha.200" color="white"
               onClick={() => setLightbox(null)}
+              _hover={{ bg: 'whiteAlpha.400' }}
             >
               ✕
-            </Button>
-          </Box>
+            </IconButton>
+          </MotionBox>
         </Box>
       )}
-    </Box>
+    </DreamyBackground>
   );
 };
 
 export default GalleryPage;
-
-
-
-
-
-
-
-
-
 
